@@ -1,61 +1,32 @@
-# see https://github.com/Virtualan/musical-note-trainer/blob/master/NoteTrainer.py
-
-# flash buster
-
-# sudo apt-get install libasound-dev
-
-#sudo apt-get remove libportaudio2
-#sudo apt-get install libasound2-dev
-#git clone -b alsapatch https://github.com/gglockner/portaudio
-#cd portaudio
-#./configure && make
-#sudo make install
-#sudo ldconfig
-#cd ..
-
-# sudo pip3 install pyaudio
-# sudo pip3 install scipy
-
-#pi@raspberrypi:~ $  aplay -l
-#**** List of PLAYBACK Hardware Devices ****
-#card 0: Headphones [bcm2835 Headphones], device 0: bcm2835 Headphones [bcm2835 Headphones]
-#  Subdevices: 8/8
-#  Subdevice #0: subdevice #0
-# ...
-
-# https://zedic.com/raspberry-pi-usb-webcam-built-in-microphone/
-#https://makersportal.com/blog/2018/9/17/audio-processing-in-python-part-ii-exploring-windowing-sound-pressure-levels-and-a-weighting-using-an-iphone-x
-
-#pi@raspberrypi:~ $ cat .asound.rc
-#pcm.!default {
-#         type asym
-#         playback.pcm {
-#                 type plug
-#                 slave.pcm "hw:0,0"
-#         }
-#         capture.pcm {
-#                 type plug
-#                 slave.pcm "hw:1,0"
-#         }
-# }
-#
-# ctl.!default {
-#        type hw
-#        card 0
-#}
-
-
 import pyaudio
 import os
 import math
 import sys
 import random
+import time
 import numpy
 from numpy import argmax, sqrt, mean, diff, log
 from scipy import signal
 from scipy.signal import blackmanharris, fftconvolve
 
+import hue
+import keyboard
 
+def key_press(key):
+  print("key: {}".format(key.name))
+  if key.name == 'b':
+      print("blue")
+      hue.lightSet(hue.lamp4_id, 41287)
+  if key.name == 'r':
+      print("red")
+      hue.lightSet(hue.lamp4_id, 8378)
+  if key.name == 'space':
+      print("off")
+      hue.lightToggle(hue.lamp4_id)
+
+keyboard.on_press(key_press)
+
+# audio
 def find(condition):
     res, = numpy.nonzero(numpy.ravel(condition))
     return res
@@ -113,8 +84,6 @@ def loudness(chunk):
     if ms < 10e-8: ms = 10e-8
     return 10.0 * math.log(ms, 10.0)
 
-
-
 def find_nearest(array, value):
     index = (numpy.abs(array - value)).argmin()
     return array[index]
@@ -128,7 +97,6 @@ def closest_value_index(array, guessValue):
     return indexArray[0][0]
 
 def build_default_tuner_range():
-
     return {65.41:'C2',
             69.30:'C2#',
             73.42:'D2',
@@ -192,51 +160,34 @@ def build_default_tuner_range():
             2093.0:'C7'
             }
 
+
 class MusicalNoteDetector(object):
 
     def main(self):
-
         # Build frequency, noteName dictionary
         tunerNotes = build_default_tuner_range()
 
         # Sort the keys and turn into a numpy array for logical indexing
         frequencies = numpy.array(sorted(tunerNotes.keys()))
 
-        top_note = len(tunerNotes)-1
-        bot_note = 0
-
-        top_note = 24
-        bot_note = 0
-
         # Misc variables for program controls
         signal_level=0                              # volume level
         targetnote=0
         soundgate = 19                              # zero is loudest possible input level
-
         SR=SoundRecorder()                          # recording device (usb mic)
 
         while 1:
-
             SR.setup()
             raw_data_signal = SR.getAudio()                                         #### raw_data_signal is the input signal data
             signal_level = round(abs(loudness(raw_data_signal)),2)                  #### find the volume from the audio sample
-
-            #try:
             inputnote = round(freq_from_autocorr(raw_data_signal,SR.RATE),2)    #### find the freq from the audio sample
-
-            #except:
-            #    inputnote = -1
-
             SR.close()
-
             #print ("{} signal_level {}".format(inputnote, signal_level))
 
             if inputnote > frequencies[len(tunerNotes)-1]:                        #### not interested in notes above the notes list
                 continue
-
             if inputnote < frequencies[0]:                                     #### not interested in notes below the notes list
                 continue
-
             if signal_level > soundgate:                                        #### basic noise gate to stop it guessing ambient noises
                 continue
 
