@@ -8,10 +8,14 @@ Adafruit Adafruit Voice Bonnet for Raspberry Pi -Two Speakers + Two Mics
 https://www.adafruit.com/product/4757#technical-details
 
 Keystudio Mic Hat (similar to Adafruit's)
-https://www.amazon.ca/KEYESTUDIO-ReSpeaker-2-Mic-V1-0-Raspberry/dp/B07H3T8SQY/ref=cm_cr_arp_d_product_top?ie=UTF8
+https://wiki.keyestudio.com/Ks0314_keyestudio_ReSpeaker_2-Mic_Pi_HAT_V1.0
 
 speaker via audio jack to verify microphone recording works
 
+# test recording and sound
+arecord --device=hw:1,0 --format S16_LE --rate 44100 -c 2 test.wav
+aplay --device=plughw:0,0 test.wav    # to test raspi jack
+aplay --device=plughw:1,0 test.wav    # to test mic hat jack
 
 # Setup (start with buster)
 sudo apt-get remove libportaudio2

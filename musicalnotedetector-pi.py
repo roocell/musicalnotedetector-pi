@@ -12,19 +12,44 @@ from scipy.signal import blackmanharris, fftconvolve
 import hue
 import keyboard
 
+cycleNoteFreq = 0
+
 def key_press(key):
   print("key: {}".format(key.name))
   if key.name == 'b':
       print("blue")
-      hue.lightSet(hue.lamp4_id, 41287)
+      hue.lightSet(hue.lamp4_id, 254, hue.blue)
   if key.name == 'r':
       print("red")
-      hue.lightSet(hue.lamp4_id, 8378)
+      hue.lightSet(hue.lamp4_id, 254, hue.red)
+  if key.name == 'y':
+      hue.lightSet(hue.lamp4_id, 254, hue.yellow)
+  if key.name == 'g':
+      hue.lightSet(hue.lamp4_id, 254, hue.green)
   if key.name == 'space':
       print("off")
       hue.lightToggle(hue.lamp4_id)
+  if key.name == 'c':
+      # cycle through notes
+      global cycleNoteFreq
+      cycleNoteFreq = 1
 
 keyboard.on_press(key_press)
+
+# ode to joy freq  (middle C)
+def musicalSequence():
+    # these are the recorded freq from the piano
+    G = 185
+    A = 208
+    B = 234
+    C = 248
+    D = 278
+    return [
+    [B,B,C,D,D,C,B,A,G,G,A,B,B,A,A],
+    [B,B,C,D,D,C,B,A,G,G,A,B,A,G,G],
+    [A,A,B,G,A,B,C,B,G,A,B,C,B,A,G,A,D],
+    [B,B,C,D,D,C,B,A,G,G,A,B,A,G,G]
+    ]
 
 # audio
 def find(condition):
@@ -164,6 +189,7 @@ def build_default_tuner_range():
 class MusicalNoteDetector(object):
 
     def main(self):
+        global cycleNoteFreq
         # Build frequency, noteName dictionary
         tunerNotes = build_default_tuner_range()
 
@@ -173,8 +199,15 @@ class MusicalNoteDetector(object):
         # Misc variables for program controls
         signal_level=0                              # volume level
         targetnote=0
-        soundgate = 19                              # zero is loudest possible input level
+        soundgate = 24                            # zero is loudest possible input level
         SR=SoundRecorder()                          # recording device (usb mic)
+
+        seq = musicalSequence()
+        bar_colours = [hue.green, hue.red, hue.blue, hue.yellow]
+        err = 4
+        bar = 0
+        note = 0
+        match = 0
 
         while 1:
             SR.setup()
@@ -194,8 +227,62 @@ class MusicalNoteDetector(object):
 
             targetnote = closest_value_index(frequencies, round(inputnote, 2))      #### find the closest note in the keyed array
 
+            # for testing notes with keyboard 'c'
+            if cycleNoteFreq != 0:
+                cycleNoteFreq = 0
+
+                newbar = bar
+                if note >= len(seq[bar])-1:
+                    newbar = bar + 1
+                    note = 0
+                inputnote = seq[newbar][note]
+                print ("cycle note {}".format(inputnote))
+
             print ("freq {} level {} index {} note {}".format(inputnote, signal_level, targetnote, tunerNotes[frequencies[targetnote]]))
 
+            min_note = min(map(min, seq)) - err*2
+            max_note = max(map(max, seq)) + err*2
+            #print ("min_note {} max_note {}".format(min_note, max_note))
+
+            # determine where we are in the sequence and set the lights appropriately
+            if inputnote >= (seq[bar][note]-err) and inputnote <= (seq[bar][note]+err):
+                match += 1
+                print ("matched {} note {} in bar {} for {} times".format(inputnote, note, bar, match))
+            elif inputnote < min_note or inputnote > max_note:
+                # the note is outside of our valid notes - start over
+                print ("note is outside of range {}".format(inputnote))
+                #match = 0
+                #note = 0
+                #bar = 0
+            else:
+                # the note is out of sequence - start over
+                print ("note is out of sequence {}".format(inputnote))
+                #match = 0
+                #note = 0
+                #bar = 0
+            if match >= 1:
+                # if we get a match three times in a row, move to next note
+                note += 1
+                match = 0
+                hue.lightSet(hue.lamp4_id, int(254*note/len(seq[bar])), bar_colours[bar])
+            if note >= len(seq[bar])-1):
+                # we've reached the end of the bar, move to next bar
+                bar += 1
+                note = 0
+                if bar < len(seq);
+                  hue.lightSet(hue.lamp4_id, int(254*note/len(seq[bar])), bar_colours[bar])
+
+            if bar >= len(seq):
+                # we're done the song
+                # flash the 4 light in the 4 colours
+                hue.lightAlert(hue.lamp4_id, 254, green)
+                hue.lightAlert(hue.lamp1_id, 254, blue)
+                hue.lightAlert(hue.lamp2_id, 254, red)
+                hue.lightAlert(hue.lamp3_id, 254, yellow)
+
+            elif bar == 0 and note == 0:
+                # they messed up - turn off the light
+                hue.lightOff(hue.lamp4_id)
 
 if __name__ == '__main__':
     MusicalNoteDetector().main()

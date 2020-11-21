@@ -12,11 +12,32 @@ lamp3_id = "6"
 lamp4_id = "7"
 lamp_outside_id = "4"
 
-def lightSet (id, colour):
+green = 21845
+red = 0
+blue = 43690
+yellow = 10000
+
+def lightSet (id, bri, colour):
   global hue_ip, hue_user
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
   print(hue_state_url)
-  blue = {"on":True, "sat":229, "bri":254,"hue":colour}
+  blue = {"on":True, "sat":229, "bri":bri,"hue":colour}
+  r = requests.put(hue_state_url, json.dumps(blue), timeout=5)
+  print(r.json())
+
+def lightSetWithBreathe (id, bri, colour):
+  global hue_ip, hue_user
+  hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
+  print(hue_state_url)
+  blue = {"on":True, "sat":229, "bri":bri,"hue":colour,  "alert":"select"}
+  r = requests.put(hue_state_url, json.dumps(blue), timeout=5)
+  print(r.json())
+
+def lightAlert(id, bri, colour):
+  global hue_ip, hue_user
+  hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
+  print(hue_state_url)
+  blue = {"on":True, "sat":229, "bri":bri,"hue":colour, "alert":"lselect"}
   r = requests.put(hue_state_url, json.dumps(blue), timeout=5)
   print(r.json())
 
