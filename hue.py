@@ -20,50 +20,50 @@ yellow = 10000
 def lightSet (id, bri, colour):
   global hue_ip, hue_user
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
-  print(hue_state_url)
+  #print(hue_state_url)
   blue = {"on":True, "sat":229, "bri":bri,"hue":colour}
   r = requests.put(hue_state_url, json.dumps(blue), timeout=5)
-  print(r.json())
+  #print(r.json())
 
 def lightSetWithBreathe (id, bri, colour):
   global hue_ip, hue_user
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
-  print(hue_state_url)
+  #print(hue_state_url)
   blue = {"on":True, "sat":229, "bri":bri,"hue":colour,  "alert":"select"}
   r = requests.put(hue_state_url, json.dumps(blue), timeout=5)
-  print(r.json())
+  #print(r.json())
 
 def lightAlert(id, bri, colour):
   global hue_ip, hue_user
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
-  print(hue_state_url)
+  #print(hue_state_url)
   blue = {"on":True, "sat":229, "bri":bri,"hue":colour, "alert":"lselect"}
   r = requests.put(hue_state_url, json.dumps(blue), timeout=5)
-  print(r.json())
+  #print(r.json())
 
 def lightOff (id):
   global hue_ip, hue_user
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
   data_off = {"on":False}
   r = requests.put(hue_state_url, json.dumps(data_off), timeout=5)
-  print(r.json())
+  #print(r.json())
 
 def lightOn (id):
   global hue_ip, hue_user
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
   data_off = {"on":True}
   r = requests.put(hue_state_url, json.dumps(data_off), timeout=5)
-  print(r.json())
+  #print(r.json())
 
 def lightToggle (id):
   global hue_ip, hue_user
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id
   r = requests.get(hue_state_url, timeout=5)
-  print(r.json()["state"]["on"])
+  #print(r.json()["state"]["on"])
   data = {"on": True}
   if r.json()["state"]["on"] == True:
     data = {"on": False}
 
   hue_state_url = "http://"+hue_ip+"/api/"+hue_user+"/lights/"+id+"/state"
   r = requests.put(hue_state_url, json.dumps(data), timeout=5)
-  print(r.json())
+  #print(r.json())

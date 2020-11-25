@@ -17,6 +17,10 @@ arecord --device=hw:1,0 --format S16_LE --rate 44100 -c 2 test.wav
 aplay --device=plughw:0,0 test.wav    # to test raspi jack
 aplay --device=plughw:1,0 test.wav    # to test mic hat jack
 
+# or you can just plug in some headphones into the hack and listen to mic
+# directly
+arecord -f cd -Dhw:1 | aplay -Dhw:1
+
 # Setup (start with buster)
 sudo apt-get remove libportaudio2
 sudo apt-get install libasound2-dev
