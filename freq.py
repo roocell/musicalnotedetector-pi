@@ -19,7 +19,7 @@ class SoundRecorder:
 
     def __init__(self):
         self.fs = 32000
-        self.BUFFERSIZE = 1024*4
+        self.BUFFERSIZE = 512*2
         self.data = 0
         self.open()
 

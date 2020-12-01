@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 import os, sys
 import time
 
@@ -27,38 +27,58 @@ def key_press(key):
       # cycle through notes
       global cycleNoteFreq
       cycleNoteFreq = 1
+  if key.name == 'q':
+      quit()
 
 keyboard.on_press(key_press)
 
 # ode to joy freq  (middle C)
+G = 185
+A = 208
+B = 234
+C = 248
+D = 278
 def musicalSequence():
+    global A,B,C,D,G
     # these are the recorded freq from the piano
-    G = 185
-    A = 208
-    B = 234
-    C = 248
-    D = 278
     return [
-    [B,B,C,D, D,C,B,A, G,G,A,B, B,A,A],
-    [B,B,C,D, D,C,B,A, G,G,A,B, A,G,G],
-    [A,A,B,G, A,B,C,B, G,A,B,C,B, A,G,A,D],
-    [B,B,C,D, D,C,B,A, G,G,A,B, A,G,G]
+        [B,B,C,D, D,C,B,A, G,G,A,B, B,A,A],
+        [B,B,C,D, D,C,B,A, G,G,A,B, A,G,G],
+        [A,A,B,G, A,B,C,B, G,A,B,C,B, A,G,A,D],
+        [B,B,C,D, D,C,B,A, G,G,A,B, A,G,G]
+        ]
+
+def freqToNote(freq):
+    global A,B,C,D,G
+    freqs = [
+    [A,"A"],
+    [B,"B"],
+    [C,"C"],
+    [D,"D"],
+    [G,"G"]
     ]
+    for f in freqs:
+        if f[0] == freq:
+            return f[1]
+    return "unknown"
+
 
 def main():
     global cycleNoteFreq
     # Misc variables for program controls
-    volume=0       # volume level
-    min_vol = 15   # zero is loudest possible input level
-    min_freq = 200  # ignore anything under 200Hz
-    match_freq = 1  # number of loops to match freq before analyzing
+    volume = -1       # volume level
+    min_vol = 4   # zero is loudest possible input level
+    min_freq = 170  # ignore anything under this Hz
+    max_freq = 1000  # ignore anything above this Hz
 
     seq = musicalSequence()
     bar_colours = [hue.green, hue.red, hue.blue, hue.yellow]
-    err = 4
+    err = 6
     bar = 0
     note = 0
     match = 0
+    edge_detected_cnt = 0
+    force_edge = False
 
     # turn off all the lights first
     hue.lightOff(hue.lamp1_id)
@@ -68,14 +88,59 @@ def main():
 
     SR=freq.SoundRecorder()
     while True:
+        #try:
         SR.getAudio()  #### raw_data_signal is the input signal data
+        #except:
+        #    print("SOMETHING WRONG WITH getAudio")
+        #    continue
+        try:
+            f = SR.freq_from_autocorr()
+        except:
+            print("SOMETHING WRONG WITH freq_from_autocorr")
+            continue
+
+        # need to detect the edge
+        # if the volume has gone up significantly, it's
+        # probably a new note being pressed
+        edge_delta = 3
+
+        # sometimes the volume oscillates (up to 3 units of volume in some
+        # cases). This doesn't happen across one sample though. so the
+        # edge detection should not pick this up.
+        # regardless, having an edge_delta that's larger than this oscillation
+        # will guarentee we don't falsely detect an edge in this case.
+        # typical edge from quiet to a key press is on the range of 15.0->0.5
+
+        last_volume = volume
         volume = SR.volume()  #### find the volume from the audio sample
-        f = SR.freq_from_autocorr()
-        #print ("{} volume {}".format(f, volume))
+
+        edge_detected = False
+        if volume != -1:
+            if volume < (last_volume - edge_delta) or force_edge==True:
+                edge_detected = True
+                edge_detected_cnt += 1
+
+        # if the edge occurs in the middle of a buffer we can detect an edge
+        # but the volume and freq will be wrong.
+        # ignore the first edge, take the second
+        if edge_detected_cnt == 1:
+            edge_detected = False
+            force_edge = True
+            # the next loop will detect an edge with a full buffer
+            continue
+
+        # it's a edge with valid readings
+        # reset the count so we can detect another edge
+        edge_detected_cnt = 0
+        force_edge = False
 
         # for testing notes with keyboard 'c'
         if cycleNoteFreq != 0:
             cycleNoteFreq = 0
+
+            # make cycling work
+            volume = min_vol + 1
+            edge_detected = True
 
             # cycling may want to start over
             if bar >= len(seq) and note >= len(seq[newbar]):
@@ -93,15 +158,22 @@ def main():
                 note = 0
             f = seq[newbar][note]
             print ("cycle note {}".format(f))
-        else:
+        else: # not in 'testing' mode
             # only process signal above certain volume
             # (lower is louder)
             if volume > min_vol:
                 continue
             if f < min_freq:
+                # ignore some frequencies
+                continue
+            if f > max_freq:
+                # ignore some frequencies
+                # sometimes high harmonics are picked up
+                continue
+            if edge_detected == False:
                 continue
 
-        print ("freq {} volume {}".format(f, volume))
+        print ("freq {} volume {} last_volume {} edge {}".format(f, volume, last_volume, edge_detected))
 
         min_note = min(map(min, seq)) - err*2
         max_note = max(map(max, seq)) + err*2
@@ -115,17 +187,18 @@ def main():
         elif f < min_note or f > max_note:
             # the note is outside of our valid notes - start over
             print ("note is outside of range {}".format(f))
-            #match = 0
-            #note = 0
-            #bar = 0
+            match = 0
+            note = 0
+            bar = 0
         else:
             # the note is out of sequence - start over
-            print ("note is out of sequence {}".format(f))
-            #match = 0
-            #note = 0
-            #bar = 0
-        if match >= match_freq:
-            # if we get a match <match_freq> times in a row, move to next note
+            print ("note {} is out of sequence, expecting {},{} {} {}".format(f, bar, note, seq[bar][note], freqToNote(seq[bar][note])))
+            match = 0
+            note = 0
+            bar = 0
+        if match:
+            # if we get a match,
+            # flash light, go brighter, then move to next note
             note += 1
             match = 0
             hue.lightOff(hue.lamp4_id)
@@ -136,7 +209,6 @@ def main():
                 note = 0
             if bar < len(seq):
                 hue.lightSet(hue.lamp4_id, int(254*note/len(seq[bar])), bar_colours[bar])
-
 
         if bar >= len(seq):
             # we're done the song
