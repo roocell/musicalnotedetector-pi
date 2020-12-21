@@ -8,6 +8,13 @@ import freq
 
 cycleNoteFreq = 0
 
+def allLightsOnNormal():
+    hue.lightSet(hue.lamp1_id, 254, hue.white)
+    hue.lightSet(hue.lamp2_id, 254, hue.white)
+    hue.lightSet(hue.lamp3_id, 254, hue.white)
+    hue.lightSet(hue.lamp4_id, 254, hue.white)
+
+
 def key_press(key):
   print("key: {}".format(key.name))
   if key.name == 'b':
@@ -80,19 +87,20 @@ def main():
     edge_detected_cnt = 0
     force_edge = False
 
-    # turn off all the lights first
-    hue.lightOff(hue.lamp1_id)
-    hue.lightOff(hue.lamp2_id)
-    hue.lightOff(hue.lamp3_id)
-    hue.lightOff(hue.lamp4_id)
+    # reset lights (all lights on at start)
+    allLightsOnNormal()
+    #hue.lightOff(hue.lamp4_id)
 
     SR=freq.SoundRecorder()
     while True:
-        #try:
-        SR.getAudio()  #### raw_data_signal is the input signal data
-        #except:
-        #    print("SOMETHING WRONG WITH getAudio")
-        #    continue
+        try:
+          SR.getAudio()  #### raw_data_signal is the input signal data
+        except Exception as e:
+            if e == KeyboardInterrupt:
+                allLightsOnNormal()
+                sys.exit()
+            print("getAudio ERROR: {}".format(e))
+            continue
         try:
             f = SR.freq_from_autocorr()
         except:
@@ -210,7 +218,9 @@ def main():
             if bar < len(seq):
                 hue.lightSet(hue.lamp4_id, int(254*note/len(seq[bar])), bar_colours[bar])
 
-        if bar >= len(seq):
+        #if bar >= len(seq):
+        # temporary
+        if bar >=1:
             # we're done the song
             # flash the 4 light in the 4 colours
             hue.lightAlert(hue.lamp4_id, 254, hue.green)
@@ -226,10 +236,8 @@ def main():
     SR.close()
 
 def destroy():
-    hue.lightOff(hue.lamp1_id)
-    hue.lightOff(hue.lamp2_id)
-    hue.lightOff(hue.lamp3_id)
-    hue.lightOff(hue.lamp4_id)
+    #hue.lightOff(hue.lamp1_id)
+    allLightsOnNormal()
     #SR.close()
 
 if __name__ == '__main__':     # Program entrance

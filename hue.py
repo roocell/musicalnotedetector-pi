@@ -2,6 +2,14 @@
 import requests
 import json
 
+# https://developers.meethue.com/develop/get-started-2/
+# https://192.168.1.102/debug/clip.html
+
+# url
+# /api/ze2dqsTNbtu5dF94FevyWtjHbM3Ax9Elrb4-tVTa/lights/1/state
+# body
+# {"on":true, "sat":254, "bri":254,"hue":10000}
+
 # Phillips Hue control
 hue_ip="192.168.1.102"
 hue_user = "ze2dqsTNbtu5dF94FevyWtjHbM3Ax9Elrb4-tVTa"
@@ -16,6 +24,7 @@ green = 21845
 red = 0
 blue = 43690
 yellow = 10000
+white = 8000
 
 def lightSet (id, bri, colour):
   global hue_ip, hue_user

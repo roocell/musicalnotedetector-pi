@@ -8,6 +8,18 @@ import math
 from scipy import signal
 from scipy.signal import blackmanharris, fftconvolve
 
+# fix for the following portaudio crash
+# PaAlsaStreamComponent_BeginPolling: Assertion `ret == self->nfds' failed
+# https://stackoverflow.com/questions/59006083/how-to-install-portaudio-on-pi-properly
+# sudo apt-get remove libportaudio2
+# sudo apt-get install libasound2-dev
+# git clone -b alsapatch https://github.com/gglockner/portaudio
+# cd portaudio
+# ./configure && make
+# sudo make install
+# sudo ldconfig
+# cd ..
+
 class SoundRecorder:
 
     def open(self):
