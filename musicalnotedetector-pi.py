@@ -218,9 +218,9 @@ def main():
             if bar < len(seq):
                 hue.lightSet(hue.lamp4_id, int(254*note/len(seq[bar])), bar_colours[bar])
 
-        #if bar >= len(seq):
-        # temporary
-        if bar >=1:
+        if bar >= len(seq):
+        # temporary to make light flash after first bar
+        #if bar >=1:
             # we're done the song
             # flash the 4 light in the 4 colours
             hue.lightAlert(hue.lamp4_id, 254, hue.green)
