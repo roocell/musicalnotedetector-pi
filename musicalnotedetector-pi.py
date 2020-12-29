@@ -45,13 +45,14 @@ A = 208
 B = 234
 C = 248
 D = 278
+lowD = 137
 def musicalSequence():
     global A,B,C,D,G
     # these are the recorded freq from the piano
     return [
         [B,B,C,D, D,C,B,A, G,G,A,B, B,A,A],
         [B,B,C,D, D,C,B,A, G,G,A,B, A,G,G],
-        [A,A,B,G, A,B,C,B, G,A,B,C,B, A,G,A,D],
+        [A,A,B,G, A,B,C,B, G,A,B,C,B, A,G,A,lowD],
         [B,B,C,D, D,C,B,A, G,G,A,B, A,G,G]
         ]
 
@@ -75,7 +76,7 @@ def main():
     # Misc variables for program controls
     volume = -1       # volume level
     min_vol = 4   # zero is loudest possible input level
-    min_freq = 170  # ignore anything under this Hz
+    min_freq = 100  # ignore anything under this Hz
     max_freq = 1000  # ignore anything above this Hz
 
     seq = musicalSequence()
@@ -86,6 +87,7 @@ def main():
     match = 0
     edge_detected_cnt = 0
     force_edge = False
+    flashing = False
 
     # reset lights (all lights on at start)
     allLightsOnNormal()
@@ -187,6 +189,12 @@ def main():
         max_note = max(map(max, seq)) + err*2
         #print ("min_note {} max_note {}".format(min_note, max_note))
 
+        if flashing:
+            # we've entered another note while flashing
+            # reset
+            bar = 0
+            note = 0
+
         # determine where we are in the sequence and set the lights appropriately
         if f >= (seq[bar][note]-err) and f <= (seq[bar][note]+err):
             match += 1
@@ -194,7 +202,7 @@ def main():
             print ("matched {} note {} in bar {} for {} times".format(f, note, bar, match))
         elif f < min_note or f > max_note:
             # the note is outside of our valid notes - start over
-            print ("note is outside of range {}".format(f))
+            print ("note is outside of range {} {} {}".format(f, min_note, max_note))
             match = 0
             note = 0
             bar = 0
@@ -227,6 +235,7 @@ def main():
             hue.lightAlert(hue.lamp1_id, 254, hue.blue)
             hue.lightAlert(hue.lamp2_id, 254, hue.red)
             hue.lightAlert(hue.lamp3_id, 254, hue.yellow)
+            flashing = True
 
         elif bar == 0 and note == 0:
             # they messed up - turn off the light
