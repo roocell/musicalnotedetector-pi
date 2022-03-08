@@ -21,6 +21,7 @@ aplay --device=plughw:1,0 test.wav    # to test mic hat jack
 arecord -f cd -Dhw:1 | aplay -Dhw:1
 
 # Setup (start with buster)
+```
 sudo apt-get remove libportaudio2
 sudo apt-get install libasound2-dev
 git clone -b alsapatch https://github.com/gglockner/portaudio
@@ -35,11 +36,12 @@ sudo pip3 install scipy
 sudo pip3 install pynput
 
 arecord -l
+
 **** List of CAPTURE Hardware Devices ****
 card 1: U0x46d0x821 [USB Device 0x46d:0x821], device 0: USB Audio [USB Audio]
  Subdevices: 1/1
  Subdevice #0: subdevice #0
-
+```
 configure .asound.rc per above
 
 # some other links
