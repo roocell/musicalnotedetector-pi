@@ -13,15 +13,22 @@ https://wiki.keyestudio.com/Ks0314_keyestudio_ReSpeaker_2-Mic_Pi_HAT_V1.0
 speaker via audio jack to verify microphone recording works
 
 # test recording and sound
+```
 arecord --device=hw:1,0 --format S16_LE --rate 44100 -c 2 test.wav
 aplay --device=plughw:0,0 test.wav    # to test raspi jack
 aplay --device=plughw:1,0 test.wav    # to test mic hat jack
-
+```
 # or you can just plug in some headphones into the jack and listen to mic directly
 arecord -f cd -Dhw:1 | aplay -Dhw:1
 
-# Setup (start with buster)
+# Setup (start with buster or bullseye - needs to be kernel 5.X)
 ```
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install git
+git clone https://github.com/respeaker/seeed-voicecard.git
+cd seeed-voicecard
+sudo ./install.sh
 sudo apt-get remove libportaudio2
 sudo apt-get install libasound2-dev
 git clone -b alsapatch https://github.com/gglockner/portaudio
